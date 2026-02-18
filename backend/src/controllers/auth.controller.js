@@ -7,12 +7,12 @@ export const register = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        res.status(400).json({ message: "All fields are required!" });
+        return res.status(400).json({ message: "All fields are required!" });
     }
 
     const userEmail = await User.findOne({ email });
     if (userEmail) {
-        res.status(409).json({ message: "Email is already registered!" });
+        return res.status(409).json({ message: "Email is already registered!" });
     }
 
     const hashPassword = await bcrypt.hash(password, 12);
@@ -21,25 +21,28 @@ export const register = asyncHandler(async (req, res) => {
         name, email, password: hashPassword
     };
 
-    await User.create(user);
-    res.status(201).json({ message: "User created successfully!", user });
+    const userData = await User.create(user);
+    res.status(201).json({
+        message: "User created successfully!",
+        userData
+    });
 });
 
 export const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        res.status(400).json({ message: "All fields are required!" });
+        return res.status(400).json({ message: "All fields are required!" });
     }
 
     const user = await User.findOne({ email });
-    if (!email) {
-        res.status(404).json({ message: "Email not found!" });
+    if (!user) {
+        return res.status(404).json({ message: "Email not found!" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-        res.status(404).josn({ message: "Invalid credentials!" });
+        return res.status(401).json({ message: "Invalid credentials!" });
     }
 
     const accessToken = jwt.sign(
@@ -71,7 +74,15 @@ export const login = asyncHandler(async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000
     });
 
-    res.status(200).json({ messsage: "User logged in successfully!", user });
+    res.status(200).json({
+        message: "User logged in successfully!",
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        }
+    });
 });
 
 export const logout = asyncHandler(async (req, res) => {
@@ -95,4 +106,19 @@ export const logout = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json({ message: "User logged out successfully!", user });
+});
+
+export const getMe = asyncHandler(async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized user!" });
+    }
+
+    return res.status(200).json({
+        user: {
+            _id: req.user._id,
+            name: req.user.name,
+            email: req.user.email,
+            role: req.user.role
+        }
+    });
 });

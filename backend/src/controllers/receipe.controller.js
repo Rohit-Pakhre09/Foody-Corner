@@ -63,3 +63,29 @@ export const updateReceipe = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: "Receipe updated successfully!", data });
 });
+
+export const deleteReceipe = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(404).json({ message: "ID is not provided!" });
+    }
+
+    if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized user!" });
+    }
+
+    const receipe = await Receipe.findById(id);
+    if (!receipe) {
+        return res.status(404).json({ message: "Receipe not found!" });
+    }
+
+    const isOwner = receipe.user?.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+    if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: "Forbidden! You cannot delete this receipe." });
+    }
+
+    await Receipe.findByIdAndDelete(id);
+    return res.status(200).json({ message: "Receipe deleted successfully!" });
+});

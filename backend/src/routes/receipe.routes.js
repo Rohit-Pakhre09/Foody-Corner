@@ -1,5 +1,5 @@
 import express from "express";
-import { createReceipe, getAllReceipe, getAllReceipeAdmin, updateReceipe } from "../controllers/receipe.controller.js";
+import { createReceipe, deleteReceipe, getAllReceipe, getAllReceipeAdmin, updateReceipe } from "../controllers/receipe.controller.js";
 import { verifyJWT } from "../middleware/verifyJWT.middleware.js";
 import { requireRole } from "../middleware/requireRole.middleware.js";
 
@@ -13,5 +13,6 @@ router.get("/receipes", verifyJWT, getAllReceipe);
 router.get("/receipes/admin", verifyJWT, requireRole("admin"), getAllReceipeAdmin);
 router.post("/", verifyJWT, requireRole("admin", "user"), createReceipe);
 router.put("/:id", verifyJWT, requireRole("admin", "user"), updateReceipe);
+router.delete("/:id", verifyJWT, requireRole("admin", "user"), deleteReceipe);
 
 export default router;
